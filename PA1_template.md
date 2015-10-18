@@ -15,7 +15,8 @@ The variables included in this dataset are:
 ##Loading and preprocessing the data
 The first code chunk loads the libraries and data and preprocesses in to a form suitable for analysis
 
-```{r loadProcess, message = FALSE, warning=FALSE,echo=TRUE}
+
+```r
 activity <- read.csv("activity.csv")
 library(lubridate)
 library(stringr)
@@ -36,12 +37,14 @@ activity$time <- paste(test2$X1,test2$X2,sep=":")
 ##What is mean total number of steps taken per day?
 1. Calculate the total number of steps taken per day
 
-```{r totalsteps, echo=TRUE}
+
+```r
 steps_day <- aggregate(steps~date_c, data=activity, sum)
 ```
 
 2. Construct a histogram of the total number of steps taken each day showing the mean and median
-```{r histogram1, echo=TRUE}
+
+```r
 par(mar= c(5,4,2,2))
 hist(steps_day$steps, breaks = 9, xlab="Total steps per day",
      main = "Histogram of total steps per day",col="light green")
@@ -52,12 +55,15 @@ abline(v=mediansteps,lty=4)
 text(10000, 16.35,"Mean and Median", pos=4, offset = 0.75)
 ```
 
-The mean number of steps per day is `r meansteps`.  
-The mean number of steps per day is `r mediansteps`.
+![plot of chunk histogram1](figure/histogram1-1.png) 
+
+The mean number of steps per day is 10766.19.  
+The mean number of steps per day is 10765.
 
 ## What is the average daily activity pattern?
 1. Time series plot of average number of steps over all days for each 5 minute interval
-```{r meansteps, echo=TRUE}
+
+```r
 steps_mean <- aggregate(steps~time, data=activity,mean)
 steps_mean$timet <- parse_date_time(steps_mean$time, "%H%M")
 
@@ -69,22 +75,26 @@ x1 <- steps_mean[steps_mean$steps==max(steps_mean$steps),3]
 abline(v=x1,lwd=5,col="blue")
 ```
 
-2. The 5 minute interval with the maximum number of steps commences at `r maxtime` with an average of `r maxsteps` steps.
+![plot of chunk meansteps](figure/meansteps-1.png) 
+
+2. The 5 minute interval with the maximum number of steps commences at 08:35 with an average of 206.1698113 steps.
 
 ## Imputing missing values
-```{r missing, echo=TRUE}
+
+```r
 incomp <- activity[activity$comp==FALSE,]
 comp <- activity[activity$comp == TRUE,]
 incompcount <- nrow(incomp)
 ```
 
-1. The total number of missing values (steps = NA) in the dataset is `r incompcount`
+1. The total number of missing values (steps = NA) in the dataset is 2304
 
 2. The strategy chosen for imputing missing values is to use the average number of steps per 5 minute interval for each of the 8 days with missing values.
 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r impute, echo=TRUE}
+
+```r
 rep_steps_mean <-do.call("rbind", replicate(8, steps_mean, simplify = FALSE))
 # http://stackoverflow.com/questions/8753531/repeat-data-frame-n-times
 for (i in 1:nrow(incomp)){
@@ -94,7 +104,8 @@ imputed_all <- rbind(comp,incomp) # this is the new dataset
 ```
 
 4. Revised histogram
-```{r histogram2, echo=TRUE}
+
+```r
 par(mar= c(5,4,2,2))
 steps_day1 <- aggregate(steps~date_c, data=imputed_all, sum)
 hist(steps_day1$steps, breaks = 9, xlab="Total steps per day",
@@ -106,23 +117,29 @@ abline(v=mediansteps1,lty=4)
 text(10000, 16.35,"Mean and Median", pos=4, offset = 0.75)
 ```
 
-The mean of the revised dataset is `r meansteps1` steps and the median is `r mediansteps1` steps. 
-This is no different to the mean calculated without imputed data with `r meansteps` steps.
+![plot of chunk histogram2](figure/histogram2-1.png) 
+
+The mean of the revised dataset is 10766.19 steps and the median is 10766.19 steps. 
+This is no different to the mean calculated without imputed data with 10766.19 steps.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 1. Create a new factor variable to identify weekday vs weekend.
-```{r daytype, echo=TRUE}
+
+```r
 imputed_all$week_data <- wday(imputed_all$date2)
 imputed_all$week_data[which(imputed_all$week_data==1|imputed_all$week_data==0)] <- "Weekend"
 imputed_all$week_data[which(imputed_all$week_data!="Weekend")] <- "Weekday"
 ```
 
 2. Make a panel plot to show comparisons between weekdays and weekends, incorporating the imputed data.
-```{r panelplot, echo=TRUE}
+
+```r
 steps_mean1 <- aggregate(imputed_all$steps, by = list(imputed_all$week_data,imputed_all$time), data=imputed_all,mean)
 steps_mean1$timet <- parse_date_time(steps_mean1$Group.2, "%H%M")
 qplot(timet, x, data = steps_mean1, facets = Group.1~., geom = "line",
       xlab = "24 hour time", ylab  = "Average steps per 5 minute interval")
 ```
+
+![plot of chunk panelplot](figure/panelplot-1.png) 
 
 The plots show that activity on weekdays is concentrated around 8 to 9 am whereas on weekends it is more spread throughout the day.
